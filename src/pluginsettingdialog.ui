@@ -52,12 +52,12 @@
     <rect>
      <x>10</x>
      <y>100</y>
-     <width>691</width>
+     <width>681</width>
      <height>401</height>
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="tab_wordModeSettings">
     <attribute name="title">
@@ -364,7 +364,7 @@
       </rect>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="tab_2">
       <attribute name="title">
@@ -373,9 +373,9 @@
       <widget class="QGroupBox" name="groupBox_2">
        <property name="geometry">
         <rect>
-         <x>0</x>
+         <x>10</x>
          <y>0</y>
-         <width>661</width>
+         <width>641</width>
          <height>231</height>
         </rect>
        </property>
@@ -625,9 +625,9 @@
       <widget class="QGroupBox" name="groupBox_3">
        <property name="geometry">
         <rect>
-         <x>0</x>
+         <x>10</x>
          <y>0</y>
-         <width>661</width>
+         <width>641</width>
          <height>231</height>
         </rect>
        </property>
@@ -877,9 +877,9 @@
       <widget class="QGroupBox" name="groupBox">
        <property name="geometry">
         <rect>
-         <x>0</x>
+         <x>10</x>
          <y>0</y>
-         <width>661</width>
+         <width>641</width>
          <height>231</height>
         </rect>
        </property>

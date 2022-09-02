@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>aboutDialog</class>
- <widget class="QDialog" name="aboutDialog">
+ <class>AboutDialog</class>
+ <widget class="QDialog" name="AboutDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -82,7 +82,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>版本号：20210517</string>
+    <string>版本号：20220902</string>
    </property>
   </widget>
   <widget class="QPushButton" name="giteePushButton">
@@ -143,7 +143,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>aboutDialog</receiver>
+   <receiver>AboutDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -159,7 +159,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>aboutDialog</receiver>
+   <receiver>AboutDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
