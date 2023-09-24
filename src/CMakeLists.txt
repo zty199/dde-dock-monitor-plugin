@@ -25,6 +25,7 @@ file(GLOB_RECURSE SRCS "*.h" "*.cpp" "*.ui")
 # <库名>_LIBRARIES      有哪些库文件（Qt5Widgets_LIBRARIES）
 find_package(Qt5Widgets REQUIRED)
 find_package(DtkWidget REQUIRED)
+find_package(DdeDock REQUIRED)
 
 # find_package 命令还可以用来加载 cmake 的功能模块
 # 并不是所有的库都直接支持 cmake 查找的，但大部分都支持了 pkg-config 这个标准，
@@ -43,7 +44,6 @@ find_package(PkgConfig REQUIRED)
 # DdeDockInterface_INCLUDE_DIRS
 # DdeDockInterface_LIBRARIES
 # 还有有另外的一些变量以及更灵活的用法，比如一次性查找多个库，这些请自行查找 cmake 文档学习。
-pkg_check_modules(DdeDockInterface REQUIRED dde-dock)
 pkg_check_modules(QGSettings REQUIRED gsettings-qt)
 
 # add_definitions 命令用于声明/定义一些编译/预处理参数
@@ -72,7 +72,7 @@ set_target_properties(${PLUGIN_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE
 target_include_directories(${PLUGIN_NAME} PUBLIC
     ${Qt5Widgets_INCLUDE_DIRS}
     ${DtkWidget_INCLUDE_DIRS}
-    ${DdeDockInterface_INCLUDE_DIRS}
+    ${DdeDock_INCLUDE_DIRS}
     ${QGSettings_INCLUDE_DIRS}
 )
 
@@ -82,7 +82,7 @@ target_include_directories(${PLUGIN_NAME} PUBLIC
 target_link_libraries(${PLUGIN_NAME} PRIVATE
     ${Qt5Widgets_LIBRARIES}
     ${DtkWidget_LIBRARIES}
-    ${DdeDockInterface_LIBRARIES}
+    ${DdeDock_LIBRARIES}
     ${QGSettings_LIBRARIES}
 )
 

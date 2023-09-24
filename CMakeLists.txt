@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.9)
 project(dde-dock-monitor-plugin)
 
 if (NOT DEFINED VERSION)
-    set(VERSION 1.8.0)
+    set(VERSION 2.0.0)
 endif ()
 
 set(CMAKE_CXX_STANDARD 11)

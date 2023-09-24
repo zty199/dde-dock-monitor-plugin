@@ -1,17 +1,17 @@
 #ifndef SYSMONITORPLUGIN_H
 #define SYSMONITORPLUGIN_H
 
+#include "aboutdialog.h"
 #include "mainwidget.h"
 #include "pluginsettingdialog.h"
-#include "aboutdialog.h"
 #include "type.h"
 
-#include <pluginsiteminterface.h>
 #include <QGSettings>
+#include <pluginsiteminterface.h>
 
+#include <QLabel>
 #include <QObject>
 #include <QTimer>
-#include <QLabel>
 
 #include <cstdio>
 
@@ -47,7 +47,15 @@ public:
     void displayModeChanged(const Dock::DisplayMode displayMode) override;
     void positionChanged(const Dock::Position position) override;
 
+    PluginType type() override;
+
     PluginSizePolicy pluginSizePolicy() const override;
+
+    QIcon icon(const DockPart &dockPart, DGuiApplicationHelper::ColorType themeType = DGuiApplicationHelper::instance()->themeType()) override;
+
+    PluginMode status() const override;
+
+    PluginFlags flags() const override;
 
 private:
     //自定义读写配置函数

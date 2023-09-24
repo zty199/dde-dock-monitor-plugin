@@ -1,6 +1,6 @@
 #include "sysmonitorplugin.h"
-#include "tipswidget.h"
 #include "common.h"
+#include "tipswidget.h"
 
 //设置选项和默认值,静态全局变量
 struct SettingItem SysMonitorPlugin::settingItems[] = {
@@ -90,7 +90,7 @@ const QString SysMonitorPlugin::pluginDisplayName() const
 
 const QString SysMonitorPlugin::pluginName() const
 {
-    return kPluginName;
+    return "sys-monitor";
 }
 
 void SysMonitorPlugin::init(PluginProxyInterface *proxyInter)
@@ -116,7 +116,8 @@ void SysMonitorPlugin::init(PluginProxyInterface *proxyInter)
         m_proxyInter->itemAdded(this, pluginName());
     }
 
-    // 设置 Timer 超时为 updateIntervalSpinBox 中的ms，即每次更新一次控件上的数据，并启动这个定时器
+    // 设置 Timer 超时为 updateIntervalSpinBox
+    // 中的ms，即每次更新一次控件上的数据，并启动这个定时器
     m_refreshTimer->start(settings.value("updateIntervalSpinBox").toInt());
 
     // 连接 Timer 超时的信号到更新数据的槽上
@@ -161,7 +162,8 @@ bool SysMonitorPlugin::pluginIsAllowDisable()
 
 bool SysMonitorPlugin::pluginIsDisable()
 {
-    // 第二个参数 “disabled” 表示存储这个值的键（所有配置都是以键值对的方式存储的）
+    // 第二个参数 “disabled”
+    // 表示存储这个值的键（所有配置都是以键值对的方式存储的）
     // 第三个参数表示默认值，即默认不禁用
     return !m_proxyInter->getValue(this, kPluginStateKey, true).toBool();
 }
@@ -225,14 +227,9 @@ void SysMonitorPlugin::invokedMenuItem(const QString &itemKey, const QString &me
 {
     Q_UNUSED(checked)
 
-    if (itemKey != pluginName()) {
-        return;
-    }
-
     // 根据上面接口设置的 id 执行不同的操作
     if (menuId == "refresh") {
-        m_proxyInter->itemRemoved(this, pluginName());
-        m_proxyInter->itemAdded(this, pluginName());
+        m_proxyInter->itemUpdate(this, pluginName());
     } else if (menuId == "open") {
         QProcess::startDetached("deepin-system-monitor", QStringList());
     } else if (menuId == "setting") {
@@ -255,13 +252,17 @@ void SysMonitorPlugin::invokedMenuItem(const QString &itemKey, const QString &me
 
 void SysMonitorPlugin::displayModeChanged(const Dock::DisplayMode displayMode)
 {
-    Q_UNUSED(displayMode);
     dismode = displayMode;
 }
+
 void SysMonitorPlugin::positionChanged(const Dock::Position position)
 {
-    Q_UNUSED(position);
     pos = position;
+}
+
+PluginsItemInterface::PluginType SysMonitorPlugin::type()
+{
+    return PluginType::Normal;
 }
 
 PluginsItemInterface::PluginSizePolicy SysMonitorPlugin::pluginSizePolicy() const
@@ -269,12 +270,32 @@ PluginsItemInterface::PluginSizePolicy SysMonitorPlugin::pluginSizePolicy() cons
     return PluginSizePolicy::Custom;
 }
 
+QIcon SysMonitorPlugin::icon(const DockPart &dockPart, DGuiApplicationHelper::ColorType themeType)
+{
+    switch (dockPart) {
+    case DockPart::SystemPanel:
+        //        return QIcon(m_mainWidget->grab().scaled(20, 20, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    default:
+        return QIcon();
+    }
+}
+
+PluginsItemInterface::PluginMode SysMonitorPlugin::status() const
+{
+    return PluginMode::Active;
+}
+
+PluginFlags SysMonitorPlugin::flags() const
+{
+    return PluginFlag::Type_Tool
+           | PluginFlag::Attribute_CanSetting;
+}
+
 //使用系统配置函数读配置信息
 void SysMonitorPlugin::readConfig(Settings *settings)
 {
     for (unsigned long i = 0; i < sizeof(settingItems) / sizeof(settingItems[0]); i++) {
-        settings->insert(settingItems[i].name,
-                         m_proxyInter->getValue(this, settingItems[i].name, settingItems[i].value));
+        settings->insert(settingItems[i].name, m_proxyInter->getValue(this, settingItems[i].name, settingItems[i].value));
     }
 }
 
@@ -339,7 +360,7 @@ void SysMonitorPlugin::onGsettingsChanged(const QString &key)
 
     if (key == kGSettingsSchemaKeyMenuEnable) {
         bool enable = m_gsettings->get(key).toBool();
-        qDebug() << Q_FUNC_INFO << "sys-monitor plugin right-click menu isEnabled:" << enable;
+        qDebug() << Q_FUNC_INFO << "Plugin sys-monitor menuEnabled:" << enable;
     }
 }
 
@@ -351,6 +372,7 @@ void SysMonitorPlugin::refreshInfo()
         perror("Could not open stat file");
         return;
     }
+
     user = 0;
     nice = 0;
     system = 0;
@@ -367,13 +389,18 @@ void SysMonitorPlugin::refreshInfo()
         fclose(fp);
         return;
     }
+
     fclose(fp);
-    sscanf(buffer, "cpu  %16llu %16llu %16llu %16llu %16llu %16llu %16llu %16llu %16llu %16llu",
-           &user, &nice, &system, &idle, &iowait, &irq, &softirq, &steal, &guest, &guestnice);
+    sscanf(buffer,
+           "cpu  %16llu %16llu %16llu %16llu %16llu %16llu %16llu %16llu %16llu "
+           "%16llu",
+           &user, &nice, &system, &idle, &iowait, &irq, &softirq, &steal, &guest,
+           &guestnice);
     worktime = user + nice + system;
     totaltime = user + nice + system + idle + iowait + irq + softirq + steal;
     // 得到百分比
-    cpuPercent = qRound((worktime - oldworktime) * 100.0 / (totaltime - oldtotaltime));
+    cpuPercent =
+        qRound((worktime - oldworktime) * 100.0 / (totaltime - oldtotaltime));
     oldtotaltime = totaltime;
     oldworktime = worktime;
     info.cpu = cpuPercent;
@@ -389,6 +416,7 @@ void SysMonitorPlugin::refreshInfo()
         perror("Could not open meminfo file");
         return;
     }
+
     do {
         ret = fgets(buffer, sizeof(buffer) - 1, fp);
         if (ret == nullptr) {
@@ -429,6 +457,7 @@ void SysMonitorPlugin::refreshInfo()
         perror("Could not open netdev file");
         return;
     }
+
     ret = fgets(buffer, sizeof(buffer) - 1, fp);
     ret = fgets(buffer, sizeof(buffer) - 1, fp);
     if (ret == nullptr) {
@@ -436,12 +465,14 @@ void SysMonitorPlugin::refreshInfo()
         fclose(fp);
         return;
     }
+
     tmpr = tmps = rbytes = sbytes = 0;
     while (true) {
         ret = fgets(buffer, sizeof(buffer) - 1, fp);
         if (ret == nullptr)
             break;
-        sscanf(buffer, "%s %lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %lu", devname, &tmpr, &tmps);
+        sscanf(buffer, "%s %lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %lu", devname,
+               &tmpr, &tmps);
         if (strcmp(devname, "lo:") == 0)
             continue;
         rbytes += tmpr;
@@ -464,11 +495,13 @@ void SysMonitorPlugin::refreshInfo()
         //使用upower命令获得电池信息，兼容性最好，deepin默认预装有upower
         fp = nullptr;
         //使用popen执行shell命令并返回一个流来读取电池信息
-        fp = popen("upower -i $(upower -e | grep 'BAT') | grep -E 'energy-rate'", "r");
+        fp = popen("upower -i $(upower -e | grep 'BAT') | grep -E 'energy-rate'",
+                   "r");
         if (fp == nullptr) {
             perror("popen");
             return;
         }
+
         battery_watts = -1.0;
         fscanf(fp, "    energy-rate:         %lf W", &battery_watts);
         pclose(fp);
@@ -486,7 +519,9 @@ void SysMonitorPlugin::refreshInfo()
         info.scputemp = QString("%1℃").arg(info.cputemp);
     }
     //大于等于10秒就归零
-    bat_count *settings.value("updateIntervalSpinBox").toInt() >= 10 * 1000 ? bat_count = 0 : bat_count++;
+    bat_count *settings.value("updateIntervalSpinBox").toInt() >= 10 * 1000
+        ? bat_count = 0
+        : bat_count++;
 
     // 更新内容
     m_mainWidget->updateData(info, pos, settings);
@@ -497,7 +532,7 @@ void SysMonitorPlugin::refreshInfo()
         updateWidget(m_appletWidget);
     }
 
-    // m_proxyInter->itemUpdate(this,pluginName());
+    m_proxyInter->itemUpdate(this, pluginName());
     // qDebug()<<"m_mainWidget->height():"<<m_mainWidget->height();
     // qDebug()<<"m_mainWidget->width():"<<m_mainWidget->width();
     // qDebug()<<"m_pluginWidget->height():"<<m_pluginWidget->height();

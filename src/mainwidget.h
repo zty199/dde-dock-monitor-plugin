@@ -27,6 +27,9 @@ public:
 
     void updateData(const Info &info, Dock::Position position, const Settings &settings);
 
+signals:
+    void requestContextMenu(const QString &itemKey) const;
+
 public:
     int dpi;
     QBoxLayout *centralLayout;

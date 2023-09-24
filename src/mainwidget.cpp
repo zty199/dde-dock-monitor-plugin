@@ -9,6 +9,8 @@ DGUI_USE_NAMESPACE
 
 MainWidget::MainWidget(Settings &settings, Dock::Position position)
 {
+    setAttribute(Qt::WA_TransparentForMouseEvents);
+
     centralLayout = nullptr;
     cpuMemLabel = nullptr;
     netLabel = nullptr;
@@ -276,14 +278,16 @@ void MainWidget::updateData(const Info &info, Dock::Position position, const Set
             netChart->updateChart(data);
         }
     }
+
     oldsettings = settings;
-    // qDebug()<<"MainWidget::UpdateData() finished";
 }
 
 QSize MainWidget::sizeHint() const
 {
-    if (centralLayout == nullptr)
+    if (centralLayout == nullptr) {
         return QSize(100, 30);
+    }
+
     int w, h;
     const Dock::Position position = qApp->property(PROP_POSITION).value<Dock::Position>();
     if (!oldsettings.value("chartModeCheckBox").toInt()) //文字模式
@@ -324,9 +328,7 @@ QSize MainWidget::sizeHint() const
                      qMax(memChart == nullptr ? 0 : memChart->width, netChart == nullptr ? 0 : netChart->width));
             h = (cpuChart == nullptr ? 0 : cpuChart->height) + (memChart == nullptr ? 0 : memChart->height) + (netChart == nullptr ? 0 : netChart->height);
         }
-    }
-    QSize size(w, h);
-    // qDebug()<<size;
-    // qDebug()<<QString("width:%1    height:%2").arg(width()).arg(height());
-    return size;
+    };
+
+    return QSize(w, h);
 }
