@@ -10,45 +10,35 @@
 #include <QLayout>
 #include <QLabel>
 
-extern struct SettingItem settingItems[];
-
-namespace Ui {
-class MainWidget;
-}
-
 class MainWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit MainWidget(Settings &, Dock::Position);
-    ~MainWidget();
-    QSize sizeHint() const;
+    MainWidget(Settings &, Dock::Position, QWidget *parent = nullptr);
+    ~MainWidget() override;
+    QSize sizeHint() const override;
 
+public slots:
     void updateData(const Info &info, Dock::Position position, const Settings &settings);
 
-signals:
-    void requestContextMenu(const QString &itemKey) const;
-
 public:
-    int dpi;
     QBoxLayout *centralLayout;
     // 文字模式数据显示在这2个Label上
     QLabel *cpuMemLabel, *netLabel;
-    //显示数据的图表类
+    // 显示数据的图表类
     StreamChart *netChart, *cpuChart, *memChart;
+
     struct Data data;
+    int dpi;
     // 字体
     QFont font;
-    //保存之前的信息
+    // 保存之前的信息
     Info oldinfo;
-    //保存之前的设置
+    // 保存之前的设置
     Settings oldsettings;
-    //保存之前的位置
+    // 保存之前的位置
     Dock::Position oldposition;
-
-private:
-    Ui::MainWidget *ui;
 };
 
 #endif // MAINWIDGET_H

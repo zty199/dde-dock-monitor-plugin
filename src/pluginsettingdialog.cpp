@@ -14,12 +14,12 @@ pluginSettingDialog::pluginSettingDialog(Settings *settings, QWidget *parent)
     } else {
         ui->tabWidget->setCurrentIndex(0);
     }
-    pal = QPalette(); //首先初始化画板
+    pal = QPalette(); // 首先初始化画板
 
     QMapIterator<QString, QVariant> i(*settings);
     while (i.hasNext()) {
         i.next();
-        //找到以key为名字的widget
+        // 找到以key为名字的widget
         QWidget *obj = findChild<QWidget *>(i.key());
         if (obj == nullptr) {
             qDebug() << "不能找到对象名为：" << i.key();
@@ -36,7 +36,7 @@ pluginSettingDialog::pluginSettingDialog(Settings *settings, QWidget *parent)
             sb->setValue(i.value().toInt());
         } else if (obj->metaObject()->className() == QStringLiteral("QWidget")) {
             QWidget *wg = qobject_cast<QWidget *>(obj);
-            pal.setColor(QPalette::Background, i.value().value<QColor>());
+            pal.setColor(QPalette::Window, i.value().value<QColor>());
             wg->setAutoFillBackground(true);
             wg->setPalette(pal);
             // qDebug()<<"颜色是："<<i.value().value<QColor>();
@@ -60,7 +60,7 @@ void pluginSettingDialog::getDisplayContentSetting(Settings *settings)
     QMapIterator<QString, QVariant> i(*settings);
     while (i.hasNext()) {
         i.next();
-        //找到以key为名字的widget
+        // 找到以key为名字的widget
         QWidget *obj = findChild<QWidget *>(i.key());
         if (obj == nullptr) {
             qDebug() << "不能找到对象名为：" << i.key();
@@ -94,7 +94,7 @@ void pluginSettingDialog::selectColor()
     QColor color = QColorDialog::getColor(colorWidget->palette().window().color(),
                                           this, tr("颜色对话框"), QColorDialog::ShowAlphaChannel);
     if (color != QColor::Invalid) {
-        pal.setColor(QPalette::Background, color);
+        pal.setColor(QPalette::Window, color);
         colorWidget->setAutoFillBackground(true);
         colorWidget->setPalette(pal);
     }

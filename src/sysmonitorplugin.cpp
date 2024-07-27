@@ -1,15 +1,20 @@
 #include "sysmonitorplugin.h"
-#include "common.h"
 #include "tipswidget.h"
+#include "pluginsettingdialog.h"
+#include "aboutdialog.h"
 
-//设置选项和默认值,静态全局变量
+#include <DDBusSender>
+
+constexpr char kPluginStateKey[] = "enable";
+
+// 设置选项和默认值,静态全局变量
 struct SettingItem SysMonitorPlugin::settingItems[] = {
-    //全局设置选项
-    {"chartModeCheckBox", 0}, //图表模式开关
-    {"batInfoComboBox", 0}, //气泡电池信息开关
-    {"updateIntervalSpinBox", 1000}, //更新间隔ms
+    // 全局设置选项
+    {"chartModeCheckBox", 0}, // 图表模式开关
+    {"batInfoComboBox", 0}, // 气泡电池信息开关
+    {"updateIntervalSpinBox", 1000}, // 更新间隔ms
 
-    //文字模式设置选项
+    // 文字模式设置选项
     {"displayContentComboBox", DisplayContentSetting::ALL},
     {"wordSpacingSpinBox", 4},
     {"cpuDiyWordLineEdit", QString("CPU:")},
@@ -19,36 +24,36 @@ struct SettingItem SysMonitorPlugin::settingItems[] = {
     {"fontSizeSpinBox", 9},
     {"fontColorComboBox", 0},
 
-    //图表模式设置选项
-    //默认三个图表都是打开的
+    // 图表模式设置选项
+    // 默认三个图表都是打开的
     {"netChartCheckBox", 1},
     {"cpuChartCheckBox", 1},
     {"memChartCheckBox", 1},
     {"chartSpacingSpinBox", 1},
     // net图表设置
-    {"netUpTopSpinBox", 500}, //上传
+    {"netUpTopSpinBox", 500}, // 上传
     {"netUpWidget", QColor(0, 78, 239, 200)},
-    {"netDownTopSpinBox", 500}, //下载
+    {"netDownTopSpinBox", 500}, // 下载
     {"netDownWidget", QColor(225, 67, 0, 200)},
-    {"netBorderRoundSpinBox", 30}, //边框
+    {"netBorderRoundSpinBox", 30}, // 边框
     {"netBorderWidget", QColor(255, 255, 255, 0)},
-    {"netBackgroundWidget", QColor(0, 0, 0, 128)}, //背景
+    {"netBackgroundWidget", QColor(0, 0, 0, 128)}, // 背景
     {"netWidthSpinBox", 40},
-    {"netHeightSpinBox", 28}, //宽度高度
+    {"netHeightSpinBox", 28}, // 宽度高度
     // cpu图表设置
     {"cpuWorkWidget", QColor(250, 74, 74, 255)},
-    {"cpuBorderRoundSpinBox", 30}, //边框
+    {"cpuBorderRoundSpinBox", 30}, // 边框
     {"cpuBorderWidget", QColor(255, 255, 255, 0)},
-    {"cpuBackgroundWidget", QColor(0, 0, 0, 128)}, //背景
+    {"cpuBackgroundWidget", QColor(0, 0, 0, 128)}, // 背景
     {"cpuWidthSpinBox", 40},
-    {"cpuHeightSpinBox", 28}, //宽度高度
+    {"cpuHeightSpinBox", 28}, // 宽度高度
     // mem图表设置
     {"memUsedWidget", QColor(21, 199, 195, 255)},
-    {"memBorderRoundSpinBox", 30}, //边框
+    {"memBorderRoundSpinBox", 30}, // 边框
     {"memBorderWidget", QColor(255, 255, 255, 0)},
-    {"memBackgroundWidget", QColor(0, 0, 0, 128)}, //背景
+    {"memBackgroundWidget", QColor(0, 0, 0, 128)}, // 背景
     {"memWidthSpinBox", 40},
-    {"memHeightSpinBox", 28} //宽度高度
+    {"memHeightSpinBox", 28} // 宽度高度
 };
 
 SysMonitorPlugin::SysMonitorPlugin(QObject *parent)
@@ -57,12 +62,6 @@ SysMonitorPlugin::SysMonitorPlugin(QObject *parent)
 {
     oldrbytes = oldsbytes = 0;
     oldworktime = oldtotaltime = 0;
-
-    if (QGSettings::isSchemaInstalled(kGSettingsSchemaId)) {
-        m_gsettings = new QGSettings(kGSettingsSchemaId, kGSettingsSchemaPath, this);
-        m_gsettings->reset(kGSettingsSchemaKeyMenuEnable);
-        connect(m_gsettings, &QGSettings::changed, this, &SysMonitorPlugin::onGsettingsChanged);
-    }
 }
 
 SysMonitorPlugin::~SysMonitorPlugin()
@@ -76,11 +75,6 @@ SysMonitorPlugin::~SysMonitorPlugin()
         m_tipsWidget->deleteLater();
         m_tipsWidget = nullptr;
     }
-
-    if (m_appletWidget) {
-        m_appletWidget->deleteLater();
-        m_appletWidget = nullptr;
-    }
 }
 
 const QString SysMonitorPlugin::pluginDisplayName() const
@@ -90,22 +84,20 @@ const QString SysMonitorPlugin::pluginDisplayName() const
 
 const QString SysMonitorPlugin::pluginName() const
 {
-    return "sys-monitor";
+    return PLUGIN_NAME;
 }
 
 void SysMonitorPlugin::init(PluginProxyInterface *proxyInter)
 {
     m_proxyInter = proxyInter;
 
-    //读取显示配置
+    // 读取显示配置
     readConfig(&settings);
 
     m_mainWidget = new MainWidget(settings, position());
     m_tipsWidget = new Dock::TipsWidget;
-    m_appletWidget = new Dock::TipsWidget;
     font.setFamily("Noto Mono");
     m_tipsWidget->setFont(font);
-    m_appletWidget->setFont(font);
     dismode = displayMode();
     pos = position();
     battery_watts = -1.0;
@@ -121,7 +113,7 @@ void SysMonitorPlugin::init(PluginProxyInterface *proxyInter)
     m_refreshTimer->start(settings.value("updateIntervalSpinBox").toInt());
 
     // 连接 Timer 超时的信号到更新数据的槽上
-    connect(m_refreshTimer, &QTimer::timeout, this, &SysMonitorPlugin::refreshInfo);
+    connect(m_refreshTimer, &QTimer::timeout, this, &SysMonitorPlugin::refreshInfo, Qt::QueuedConnection);
 }
 
 QWidget *SysMonitorPlugin::itemWidget(const QString &itemKey)
@@ -139,19 +131,14 @@ QWidget *SysMonitorPlugin::itemTipsWidget(const QString &itemKey)
         return nullptr;
     }
 
-    //更新气泡数据
+    // 更新气泡数据
     updateWidget(m_tipsWidget);
     return m_tipsWidget;
 }
 
 QWidget *SysMonitorPlugin::itemPopupApplet(const QString &itemKey)
 {
-    if (itemKey != pluginName()) {
-        return nullptr;
-    }
-
-    updateWidget(m_appletWidget);
-    return m_appletWidget;
+    return nullptr;
 }
 
 bool SysMonitorPlugin::pluginIsAllowDisable()
@@ -231,22 +218,32 @@ void SysMonitorPlugin::invokedMenuItem(const QString &itemKey, const QString &me
     if (menuId == "refresh") {
         m_proxyInter->itemUpdate(this, pluginName());
     } else if (menuId == "open") {
-        QProcess::startDetached("deepin-system-monitor", QStringList());
+        DDBusSender()
+            .service("org.desktopspec.ApplicationManager1")
+            .path("/org/desktopspec/ApplicationManager1/deepin_2dsystem_2dmonitor")
+            .interface("org.desktopspec.ApplicationManager1.Application")
+            .method("Launch")
+            .arg(QString())
+            .arg(QStringList())
+            .arg(QVariantMap())
+            .call();
     } else if (menuId == "setting") {
         int updataInterval = settings.value("updateIntervalSpinBox").toInt();
-        pluginSettingDialog setting(&settings);
-        if (setting.exec() == QDialog::Accepted) {
-            setting.getDisplayContentSetting(&settings);
-            writeConfig(&settings);
-            if (settings.value("updateIntervalSpinBox").toInt() != updataInterval) {
-                // 修改更新时间间隔
-                m_refreshTimer->start(settings.value("updateIntervalSpinBox").toInt());
+        m_settingDialog.reset(new pluginSettingDialog(&settings, m_mainWidget));
+        connect(m_settingDialog.data(), &pluginSettingDialog::finished, this, [=](int result) {
+            if (result == QDialog::Accepted) {
+                m_settingDialog->getDisplayContentSetting(&settings);
+                writeConfig(&settings);
+                if (settings.value("updateIntervalSpinBox").toInt() != updataInterval) {
+                    // 修改更新时间间隔
+                    m_refreshTimer->start(settings.value("updateIntervalSpinBox").toInt());
+                }
             }
-        }
+        });
+        m_settingDialog->show();
     } else if (menuId == "about") {
-        AboutDialog aboutdialog;
-        if (aboutdialog.exec() == QDialog::Accepted) {
-        }
+        m_aboutDialog.reset(new AboutDialog(m_mainWidget));
+        m_aboutDialog->show();
     }
 }
 
@@ -260,38 +257,12 @@ void SysMonitorPlugin::positionChanged(const Dock::Position position)
     pos = position;
 }
 
-PluginsItemInterface::PluginType SysMonitorPlugin::type()
-{
-    return PluginType::Normal;
-}
-
 PluginsItemInterface::PluginSizePolicy SysMonitorPlugin::pluginSizePolicy() const
 {
     return PluginSizePolicy::Custom;
 }
 
-QIcon SysMonitorPlugin::icon(const DockPart &dockPart, DGuiApplicationHelper::ColorType themeType)
-{
-    switch (dockPart) {
-    case DockPart::SystemPanel:
-        //        return QIcon(m_mainWidget->grab().scaled(20, 20, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-    default:
-        return QIcon();
-    }
-}
-
-PluginsItemInterface::PluginMode SysMonitorPlugin::status() const
-{
-    return PluginMode::Active;
-}
-
-PluginFlags SysMonitorPlugin::flags() const
-{
-    return PluginFlag::Type_Tool
-           | PluginFlag::Attribute_CanSetting;
-}
-
-//使用系统配置函数读配置信息
+// 使用系统配置函数读配置信息
 void SysMonitorPlugin::readConfig(Settings *settings)
 {
     for (unsigned long i = 0; i < sizeof(settingItems) / sizeof(settingItems[0]); i++) {
@@ -299,7 +270,7 @@ void SysMonitorPlugin::readConfig(Settings *settings)
     }
 }
 
-//写配置信息
+// 写配置信息
 void SysMonitorPlugin::writeConfig(Settings *settings)
 {
     QMapIterator<QString, QVariant> i(*settings);
@@ -354,19 +325,9 @@ const QString SysMonitorPlugin::toHumanRead(unsigned long l, const char *unit, i
     return str;
 }
 
-void SysMonitorPlugin::onGsettingsChanged(const QString &key)
-{
-    Q_ASSERT(m_gsettings);
-
-    if (key == kGSettingsSchemaKeyMenuEnable) {
-        bool enable = m_gsettings->get(key).toBool();
-        qDebug() << Q_FUNC_INFO << "Plugin sys-monitor menuEnabled:" << enable;
-    }
-}
-
 void SysMonitorPlugin::refreshInfo()
 {
-    //获得cpu信息
+    // 获得cpu信息
     fp = fopen("/proc/stat", "r");
     if (fp == nullptr) {
         perror("Could not open stat file");
@@ -410,7 +371,7 @@ void SysMonitorPlugin::refreshInfo()
     }
     info.scpu += QString::number(cpuPercent) + "%";
 
-    //获得内存信息
+    // 获得内存信息
     fp = fopen("/proc/meminfo", "r");
     if (fp == nullptr) {
         perror("Could not open meminfo file");
@@ -451,7 +412,7 @@ void SysMonitorPlugin::refreshInfo()
         strswap += QString::number(swapPercent) + "%";
     }
 
-    //获得net信息
+    // 获得net信息
     fp = fopen("/proc/net/dev", "r");
     if (fp == nullptr) {
         perror("Could not open netdev file");
@@ -479,7 +440,7 @@ void SysMonitorPlugin::refreshInfo()
         sbytes += tmps;
     }
     fclose(fp);
-    //考虑到读取间隔不一定是1s，要运算成1s的量
+    // 考虑到读取间隔不一定是1s，要运算成1s的量
     tmpr = (oldrbytes == 0 ? 0 : rbytes - oldrbytes) * 1000 / settings.value("updateIntervalSpinBox").toUInt();
     tmps = (oldsbytes == 0 ? 0 : sbytes - oldsbytes) * 1000 / settings.value("updateIntervalSpinBox").toUInt();
     oldrbytes = rbytes;
@@ -490,11 +451,11 @@ void SysMonitorPlugin::refreshInfo()
     info.snetup = toHumanRead(tmps, "B", 0);
     info.snetdwon = toHumanRead(tmpr, "B", 0);
 
-    //每10s执行一次，降低cpu开销
+    // 每10s执行一次，降低cpu开销
     if (settings.value("batInfoComboBox").toInt() == 1 && bat_count == 0) {
-        //使用upower命令获得电池信息，兼容性最好，deepin默认预装有upower
+        // 使用upower命令获得电池信息，兼容性最好，deepin默认预装有upower
         fp = nullptr;
-        //使用popen执行shell命令并返回一个流来读取电池信息
+        // 使用popen执行shell命令并返回一个流来读取电池信息
         fp = popen("upower -i $(upower -e | grep 'BAT') | grep -E 'energy-rate'",
                    "r");
         if (fp == nullptr) {
@@ -506,7 +467,7 @@ void SysMonitorPlugin::refreshInfo()
         fscanf(fp, "    energy-rate:         %lf W", &battery_watts);
         pclose(fp);
 
-        //使用sensors获得CPU温度
+        // 使用sensors获得CPU温度
         fp = nullptr;
         fp = popen("sensors | grep 'Core 0'", "r");
         info.cputemp = 0;
@@ -518,7 +479,7 @@ void SysMonitorPlugin::refreshInfo()
         pclose(fp);
         info.scputemp = QString("%1℃").arg(info.cputemp);
     }
-    //大于等于10秒就归零
+    // 大于等于10秒就归零
     bat_count *settings.value("updateIntervalSpinBox").toInt() >= 10 * 1000
         ? bat_count = 0
         : bat_count++;
@@ -527,9 +488,6 @@ void SysMonitorPlugin::refreshInfo()
     m_mainWidget->updateData(info, pos, settings);
     if (m_tipsWidget->isVisible()) {
         updateWidget(m_tipsWidget);
-    }
-    if (m_appletWidget->isVisible()) {
-        updateWidget(m_appletWidget);
     }
 
     m_proxyInter->itemUpdate(this, pluginName());
