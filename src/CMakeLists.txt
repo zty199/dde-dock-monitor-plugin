@@ -27,3 +27,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 )
 
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/dde-dock/plugins)
+install(FILES ${CMAKE_SOURCE_DIR}/resources/icons/${PLUGIN_NAME}.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/dde-dock/icons/dcc-setting)
