@@ -486,6 +486,12 @@ void SysMonitorPlugin::refreshInfo()
 
     // 更新内容
     m_mainWidget->updateData(info, pos, settings);
+    /**
+     * NOTE: dde-tray-loader use compositor to show plugin widget
+     * plugin has to setFixedSize to show correct size
+     */
+    m_mainWidget->setFixedSize(m_mainWidget->sizeHint());
+
     if (m_tipsWidget->isVisible()) {
         updateWidget(m_tipsWidget);
     }
