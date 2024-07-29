@@ -1,7 +1,6 @@
 #ifndef SYSMONITORPLUGIN_H
 #define SYSMONITORPLUGIN_H
 
-#include "mainwidget.h"
 #include "type.h"
 
 #include <pluginsiteminterface.h>
@@ -11,14 +10,14 @@
 #include <QTimer>
 #include <QScopedPointer>
 
-#include <cstdio>
-
 namespace Dock {
 class TipsWidget;
 }
 
+class MainWidget;
 class pluginSettingDialog;
 class AboutDialog;
+class WidgetPlugin;
 class SysMonitorPlugin : public QObject
     , PluginsItemInterface
 {
@@ -109,6 +108,8 @@ private:
 
     QScopedPointer<pluginSettingDialog> m_settingDialog;
     QScopedPointer<AboutDialog> m_aboutDialog;
+
+    WidgetPlugin *m_proxyInter = nullptr;
 };
 
 #endif // SYSMONITORPLUGIN_H

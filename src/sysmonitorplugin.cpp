@@ -1,9 +1,13 @@
 #include "sysmonitorplugin.h"
+#include "widgetplugin.hpp"
+#include "mainwidget.h"
 #include "tipswidget.h"
 #include "pluginsettingdialog.h"
 #include "aboutdialog.h"
 
 #include <DDBusSender>
+
+#include <cstdio>
 
 constexpr char kPluginStateKey[] = "enable";
 
@@ -89,7 +93,8 @@ const QString SysMonitorPlugin::pluginName() const
 
 void SysMonitorPlugin::init(PluginProxyInterface *proxyInter)
 {
-    m_proxyInter = proxyInter;
+    PluginsItemInterface::m_proxyInter = proxyInter;
+    m_proxyInter = new WidgetPlugin(PluginsItemInterface::m_proxyInter, this);
 
     // 读取显示配置
     readConfig(&settings);

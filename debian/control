@@ -10,7 +10,8 @@ Build-Depends:
  qtbase5-dev,
  libdtkcore-dev,
  libdtkgui-dev,
- dde-tray-loader-dev
+ dde-tray-loader-dev,
+ libgsettings-qt-dev
 Standards-Version: 4.1.7
 Homepage: https://github.com/q77190858/dde-sys-monitor-plugin
 
