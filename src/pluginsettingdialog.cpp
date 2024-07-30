@@ -9,6 +9,7 @@ pluginSettingDialog::pluginSettingDialog(Settings *settings, QWidget *parent)
     , ui(new Ui::pluginSettingDialog)
 {
     ui->setupUi(this);
+
     if (settings->value("chartModeCheckBox").toInt()) {
         ui->tabWidget->setCurrentIndex(1);
     } else {

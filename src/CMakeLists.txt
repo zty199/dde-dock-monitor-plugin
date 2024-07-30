@@ -1,9 +1,14 @@
 set(PLUGIN_NAME "sys-monitor")
 add_compile_definitions(PLUGIN_NAME="${PLUGIN_NAME}")
 
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
+find_package(Qt5 COMPONENTS DBus Widgets REQUIRED)
 find_package(Dtk COMPONENTS Core Gui REQUIRED)
-find_package(DdeTrayLoader REQUIRED)
+
+find_package(DdeTrayLoader QUIET)
+if (NOT ${DdeTrayLoader_FOUND})
+    find_package(DdeDock REQUIRED)
+endif ()
+
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GSettingsQt IMPORTED_TARGET gsettings-qt)
 
@@ -17,6 +22,7 @@ add_library(${PROJECT_NAME} MODULE ${SRCS} ${QRC_FILE})
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${PLUGIN_NAME})
 
 target_include_directories(${PROJECT_NAME} PUBLIC
+    Qt5::DBus
     Qt5::Widgets
     Dtk::Core
     Dtk::Gui
@@ -24,6 +30,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
+    Qt5::DBus
     Qt5::Widgets
     Dtk::Core
     Dtk::Gui

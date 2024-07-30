@@ -7,6 +7,9 @@
 
 #include <DDBusSender>
 
+#include <QDBusConnection>
+#include <QDBusConnectionInterface>
+
 #include <cstdio>
 
 constexpr char kPluginStateKey[] = "enable";
@@ -143,6 +146,8 @@ QWidget *SysMonitorPlugin::itemTipsWidget(const QString &itemKey)
 
 QWidget *SysMonitorPlugin::itemPopupApplet(const QString &itemKey)
 {
+    Q_UNUSED(itemKey)
+
     return nullptr;
 }
 
@@ -219,19 +224,33 @@ void SysMonitorPlugin::invokedMenuItem(const QString &itemKey, const QString &me
 {
     Q_UNUSED(checked)
 
+    if (itemKey != pluginName()) {
+        return;
+    }
+
     // 根据上面接口设置的 id 执行不同的操作
     if (menuId == "refresh") {
         m_proxyInter->itemUpdate(this, pluginName());
     } else if (menuId == "open") {
-        DDBusSender()
-            .service("org.desktopspec.ApplicationManager1")
-            .path("/org/desktopspec/ApplicationManager1/deepin_2dsystem_2dmonitor")
-            .interface("org.desktopspec.ApplicationManager1.Application")
-            .method("Launch")
-            .arg(QString())
-            .arg(QStringList())
-            .arg(QVariantMap())
-            .call();
+        if (QDBusConnection::sessionBus().interface()->isServiceRegistered("org.desktopspec.ApplicationManager1")) {
+            DDBusSender()
+                .service("org.desktopspec.ApplicationManager1")
+                .path("/org/desktopspec/ApplicationManager1/deepin_2dsystem_2dmonitor")
+                .interface("org.desktopspec.ApplicationManager1.Application")
+                .method("Launch")
+                .arg(QString())
+                .arg(QStringList())
+                .arg(QVariantMap())
+                .call();
+        } else {
+            DDBusSender()
+                .service("com.deepin.SessionManager")
+                .path("/com/deepin/StartManager")
+                .interface("com.deepin.StartManager")
+                .method("Launch")
+                .arg(QString("/usr/share/applications/deepin-system-monitor.desktop"))
+                .call();
+        }
     } else if (menuId == "setting") {
         int updataInterval = settings.value("updateIntervalSpinBox").toInt();
         m_settingDialog.reset(new pluginSettingDialog(&settings, m_mainWidget));
@@ -492,10 +511,12 @@ void SysMonitorPlugin::refreshInfo()
     // 更新内容
     m_mainWidget->updateData(info, pos, settings);
     /**
-     * NOTE: dde-tray-loader use compositor to show plugin widget
-     * plugin has to setFixedSize to show correct size
+     * NOTE: plugin is setFixedSize when loaded by
+     * dde-tray-loader, which cause incorrect size
+     * so remove constraints manually here
      */
-    m_mainWidget->setFixedSize(m_mainWidget->sizeHint());
+    m_mainWidget->setMinimumSize(0, 0);
+    m_mainWidget->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
 
     if (m_tipsWidget->isVisible()) {
         updateWidget(m_tipsWidget);
@@ -536,5 +557,9 @@ void SysMonitorPlugin::updateWidget(Dock::TipsWidget *widget)
         batInfo = QString("\nBAT: %1W").arg(QString::number(battery_watts, 'f', 2));
     }
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
     widget->setTextList(QString(baseInfo + batInfo).split("\n", Qt::SkipEmptyParts));
+#else
+    widget->setTextList(QString(baseInfo + batInfo).split("\n", QString::SkipEmptyParts));
+#endif
 }
