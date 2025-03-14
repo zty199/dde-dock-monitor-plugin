@@ -7,11 +7,11 @@ Build-Depends:
  debhelper (>= 11),
  pkg-config,
  qtchooser (>= 55-gc9562a1-1~),
- qtbase5-dev,
- libdtkcore-dev,
- libdtkgui-dev,
- dde-tray-loader-dev | dde-dock-dev,
- libgsettings-qt-dev
+ qt6-base-dev,
+ libdtk6core-dev,
+ libdtk6gui-dev,
+ dde-tray-loader-dev (>= 1.99.4),
+ libgio-qt-dev (>= 0.0.12)
 Standards-Version: 4.1.7
 Homepage: https://github.com/q77190858/dde-sys-monitor-plugin
 
@@ -19,6 +19,6 @@ Package: dde-dock-monitor-plugin
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends},
  dde-control-center,
- dde-tray-loader | dde-dock
-Description: A dde-dock system monitor plugin for Deepin 23.
+ dde-tray-loader
+Description: A dde-dock system monitor plugin for Deepin 25.
  任务栏插件，显示网速和CPU内存占用，q77190858编写，shenmo打包。新版更新了包名，符合官方命名逻辑。

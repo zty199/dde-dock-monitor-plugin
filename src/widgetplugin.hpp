@@ -4,7 +4,7 @@
 #include <pluginproxyinterface.h>
 #include <pluginsiteminterface.h>
 
-#include <QGSettings>
+#include <dgiosettings.h>
 
 #include <QObject>
 #include <QJsonDocument>
@@ -13,7 +13,7 @@
 
 constexpr char kGSettingsSchemaId[] = "com.deepin.dde.dock";
 constexpr char kGSettingsPath[] = "";
-const QString kGSettingsKey = "pluginSettings";
+const QString kGSettingsKey = "plugin-settings";
 
 class WidgetPlugin : public QObject
     , PluginProxyInterface
@@ -25,8 +25,8 @@ public:
         : QObject(parent)
         , m_proxyInter(proxyInter)
     {
-        if (QGSettings::isSchemaInstalled(kGSettingsSchemaId)) {
-            m_gsettings = new QGSettings(kGSettingsSchemaId, kGSettingsPath, this);
+        if (DGioSettings::isSchemaInstalled(kGSettingsSchemaId)) {
+            m_gsettings = new DGioSettings(kGSettingsSchemaId, kGSettingsPath, this);
         }
     }
 
@@ -66,7 +66,7 @@ public:
             return m_proxyInter->saveValue(itemInter, key, value);
         }
 
-        QVariant oldValue = m_gsettings->get(kGSettingsKey);
+        QVariant oldValue = m_gsettings->value(kGSettingsKey);
         QJsonParseError error;
         QJsonDocument doc = QJsonDocument::fromJson(oldValue.toString().toUtf8(), &error);
         if (error.error != QJsonParseError::NoError || !doc.isObject()) {
@@ -77,7 +77,7 @@ public:
         QJsonObject data = obj.value(itemInter->pluginName()).toObject();
         data.insert(key, QJsonValue::fromVariant(value));
         obj.insert(itemInter->pluginName(), data);
-        m_gsettings->set(kGSettingsKey, QJsonDocument(obj).toJson(QJsonDocument::Compact));
+        m_gsettings->setValue(kGSettingsKey, QJsonDocument(obj).toJson(QJsonDocument::Compact));
     }
 
     const QVariant getValue(PluginsItemInterface *const itemInter, const QString &key, const QVariant &fallback) override
@@ -86,7 +86,7 @@ public:
             return m_proxyInter->getValue(itemInter, key, fallback);
         }
 
-        QVariant value = m_gsettings->get(kGSettingsKey);
+        QVariant value = m_gsettings->value(kGSettingsKey);
         QJsonParseError error;
         QJsonDocument doc = QJsonDocument::fromJson(value.toString().toUtf8(), &error);
         if (error.error != QJsonParseError::NoError || !doc.isObject()) {
@@ -104,7 +104,7 @@ public:
             return m_proxyInter->removeValue(itemInter, keyList);
         }
 
-        QVariant value = m_gsettings->get(kGSettingsKey);
+        QVariant value = m_gsettings->value(kGSettingsKey);
         QJsonParseError error;
         QJsonDocument doc = QJsonDocument::fromJson(value.toString().toUtf8(), &error);
         if (error.error != QJsonParseError::NoError || !doc.isObject()) {
@@ -118,13 +118,13 @@ public:
         }
         data.isEmpty() ? obj.remove(itemInter->pluginName())
                        : (void)obj.insert(itemInter->pluginName(), data);
-        m_gsettings->set(kGSettingsKey, QJsonDocument(obj).toJson(QJsonDocument::Compact));
+        m_gsettings->setValue(kGSettingsKey, QJsonDocument(obj).toJson(QJsonDocument::Compact));
     }
 
 private:
     PluginProxyInterface *m_proxyInter = nullptr;
 
-    QGSettings *m_gsettings = nullptr;
+    DGioSettings *m_gsettings = nullptr;
 };
 
 #endif // WIDGETPLUGIN_HPP
