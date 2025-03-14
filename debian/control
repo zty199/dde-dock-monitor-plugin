@@ -1,35 +1,24 @@
 Source: dde-dock-monitor-plugin
-Maintainer: q77190858 shenmo <jifengshenmo@outlook.com>
+Maintainer: q77190858/shenmo <jifengshenmo@outlook.com>
 Section: utils
 Priority: optional
 Build-Depends:
  cmake,
- debhelper (>= 9),
- libqt5core5a,
- libqt5gui5,
- libqt5widgets5,
- libdtkcore-dev,
- libdtkgui-dev,
- libdtkwidget-dev,
- libgsettings-qt-dev,
+ debhelper (>= 11),
  pkg-config,
  qtchooser (>= 55-gc9562a1-1~),
- dde-dock-dev
-Standards-Version: 1.8.0
+ qtbase5-dev,
+ libdtkcore-dev,
+ libdtkgui-dev,
+ dde-tray-loader-dev | dde-dock-dev,
+ libgsettings-qt-dev
+Standards-Version: 4.1.7
 Homepage: https://github.com/q77190858/dde-sys-monitor-plugin
-
 
 Package: dde-dock-monitor-plugin
 Architecture: any
-Depends:${shlibs:Depends}, ${misc:Depends},
+Depends: ${shlibs:Depends}, ${misc:Depends},
  dde-control-center,
- dde-dock (>= 5.3.0.54-1),
- libqt5core5a,
- libqt5gui5,
- libqt5widgets5,
- libdtkcore5,
- libdtkgui5,
- libdtkwidget5,
- libgsettings-qt1
-Description: A dde-dock system monitor plugin for Deepin/UOS 20.
+ dde-tray-loader | dde-dock
+Description: A dde-dock system monitor plugin for Deepin 23.
  任务栏插件，显示网速和CPU内存占用，q77190858编写，shenmo打包。新版更新了包名，符合官方命名逻辑。

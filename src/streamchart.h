@@ -12,13 +12,13 @@ class StreamChart : public QWidget
 
 public:
     explicit StreamChart(QWidget *parent = nullptr);
-    ~StreamChart();
+    ~StreamChart() override;
 
 protected:
-    void paintEvent(QPaintEvent *);
+    void paintEvent(QPaintEvent *) override;
 
 public slots:
-    //定时更新数据图标的函数
+    // 定时更新数据图标的函数
     void updateChart(struct Data &);
 
 public:

@@ -57,7 +57,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="tab_wordModeSettings">
     <attribute name="title">
@@ -125,7 +125,7 @@
      </item>
      <item>
       <property name="text">
-       <string>显示CP&amp;U、内存和网速</string>
+       <string>显示CPU、内存和网速</string>
       </property>
      </item>
     </widget>

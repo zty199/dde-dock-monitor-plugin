@@ -7,16 +7,15 @@
 
 DGUI_USE_NAMESPACE
 
-MainWidget::MainWidget(Settings &settings, Dock::Position position)
+MainWidget::MainWidget(Settings &settings, Dock::Position position, QWidget *parent)
+    : QWidget(parent)
+    , centralLayout(new QBoxLayout(QBoxLayout::Direction::LeftToRight, this))
 {
-    centralLayout = nullptr;
-    cpuMemLabel = nullptr;
-    netLabel = nullptr;
-    netChart = nullptr;
-    cpuChart = nullptr;
-    memChart = nullptr;
-    // setMinimumSize(5,5);
-    //设置等宽字体
+    setAttribute(Qt::WA_TransparentForMouseEvents);
+
+    centralLayout->setContentsMargins(0, 0, 0, 0);
+
+    // 设置等宽字体
     font.setFamily("Noto Mono");
     // 获取dpi，一般默认都是96，根据dpi进行字体的缩放，直接设置pointsize无法解决hidpi问题
     dpi = qIntCast(QGuiApplication::primaryScreen()->logicalDotsPerInch());
@@ -28,39 +27,11 @@ MainWidget::MainWidget(Settings &settings, Dock::Position position)
     });
 }
 
-MainWidget::~MainWidget()
-{
-    if (cpuMemLabel != nullptr) {
-        delete cpuMemLabel;
-        cpuMemLabel = nullptr;
-    }
-    if (netLabel != nullptr) {
-        delete netLabel;
-        netLabel = nullptr;
-    }
-    if (netChart != nullptr) {
-        delete netChart;
-        netChart = nullptr;
-    }
-    if (cpuChart != nullptr) {
-        delete cpuChart;
-        cpuChart = nullptr;
-    }
-    if (memChart != nullptr) {
-        delete memChart;
-        memChart = nullptr;
-    }
-    if (centralLayout != nullptr) {
-        delete centralLayout;
-        centralLayout = nullptr;
-    }
-}
-
 void MainWidget::updateData(const Info &info, Dock::Position position, const Settings &settings)
 {
     oldinfo = info;
-    // qDebug()<<"MainWidget::UpdateData() start";
-    //如果dock位置发生如下变化，则手动重构ui
+
+    // 如果dock位置发生如下变化，则手动重构ui
     if (((oldposition == Dock::Top || oldposition == Dock::Bottom) && (position == Dock::Left || position == Dock::Right))
         || ((position == Dock::Top || position == Dock::Bottom) && (oldposition == Dock::Left || oldposition == Dock::Right))) {
         if (cpuMemLabel != nullptr) {
@@ -83,19 +54,15 @@ void MainWidget::updateData(const Info &info, Dock::Position position, const Set
             delete memChart;
             memChart = nullptr;
         }
-        if (centralLayout != nullptr) {
-            delete centralLayout;
-            centralLayout = nullptr;
-        }
     }
     oldposition = position;
 
-    if (!settings.value("chartModeCheckBox").toInt()) //文字模式
+    if (!settings.value("chartModeCheckBox").toInt()) // 文字模式
     {
-        //当模式切换的时候
+        // 当模式切换的时候
         if (oldsettings.value("chartModeCheckBox").toInt()) {
-            //先清理掉之前的ui
-            // qDebug()<<"模式切换，先清理掉之前的图表ui";
+            // 先清理掉之前的ui
+            //  qDebug()<<"模式切换，先清理掉之前的图表ui";
             if (netChart != nullptr) {
                 delete netChart;
                 netChart = nullptr;
@@ -108,26 +75,22 @@ void MainWidget::updateData(const Info &info, Dock::Position position, const Set
                 delete memChart;
                 memChart = nullptr;
             }
-            if (centralLayout != nullptr) {
-                delete centralLayout;
-                centralLayout = nullptr;
-            }
         }
-        //当模式切换或者第一次初始化的时候，需要新建ui
-        if (centralLayout == nullptr) {
-            //创建新的ui
-            qDebug() << "创建新的文字ui";
-            cpuMemLabel = new QLabel();
-            cpuMemLabel->setAlignment(Qt::AlignCenter);
-            netLabel = new QLabel();
-            netLabel->setAlignment(Qt::AlignCenter);
-            centralLayout = new QBoxLayout((position == Dock::Top || position == Dock::Bottom) ? QBoxLayout::LeftToRight : QBoxLayout::TopToBottom);
-            centralLayout->addWidget(cpuMemLabel);
-            centralLayout->addWidget(netLabel);
-            centralLayout->setMargin(0);
-            setLayout(centralLayout);
-        }
+        // 当模式切换的时候，需要新建ui
+        centralLayout->setDirection((position == Dock::Top || position == Dock::Bottom) ? QBoxLayout::LeftToRight : QBoxLayout::TopToBottom);
         centralLayout->setSpacing(settings.value("wordSpacingSpinBox").toInt());
+        // 创建新的ui
+        if (cpuMemLabel == nullptr) {
+            cpuMemLabel = new QLabel(this);
+            cpuMemLabel->setAlignment(Qt::AlignCenter);
+            centralLayout->addWidget(cpuMemLabel);
+        }
+        if (netLabel == nullptr) {
+            netLabel = new QLabel(this);
+            netLabel->setAlignment(Qt::AlignCenter);
+            centralLayout->addWidget(netLabel);
+        }
+
         font.setPixelSize((dpi * settings.value("fontSizeSpinBox").toInt()) / 72);
         cpuMemLabel->setFont(font);
         netLabel->setFont(font);
@@ -185,19 +148,19 @@ void MainWidget::updateData(const Info &info, Dock::Position position, const Set
                                   .arg(info.snetdwon));
             break;
         }
-    } else //图表模式
+    } else // 图表模式
     {
-        //当模式切换的时候，清除文字ui
+        // 当模式切换的时候，清除文字ui
         if (!oldsettings.value("chartModeCheckBox").toInt()) {
             delete cpuMemLabel;
             cpuMemLabel = nullptr;
             delete netLabel;
             netLabel = nullptr;
-            delete centralLayout;
-            centralLayout = nullptr;
         }
-        //当图表有变化的时候，清除所有图表ui
-        if (oldsettings.value("cpuChartCheckBox").toInt() + settings.value("cpuChartCheckBox").toInt() == 1 || oldsettings.value("memChartCheckBox").toInt() + settings.value("memChartCheckBox").toInt() == 1 || oldsettings.value("netChartCheckBox").toInt() + settings.value("netChartCheckBox").toInt() == 1) {
+        // 当图表有变化的时候，清除所有图表ui
+        if (oldsettings.value("cpuChartCheckBox").toInt() + settings.value("cpuChartCheckBox").toInt() == 1
+            || oldsettings.value("memChartCheckBox").toInt() + settings.value("memChartCheckBox").toInt() == 1
+            || oldsettings.value("netChartCheckBox").toInt() + settings.value("netChartCheckBox").toInt() == 1) {
             if (cpuChart != nullptr) {
                 delete cpuChart;
                 cpuChart = nullptr;
@@ -210,20 +173,13 @@ void MainWidget::updateData(const Info &info, Dock::Position position, const Set
                 delete netChart;
                 netChart = nullptr;
             }
-            delete centralLayout;
-            centralLayout = nullptr;
         }
-        //当模式切换或者第一次初始化的时候，绘制图表ui
-        if (centralLayout == nullptr) {
-            centralLayout = new QBoxLayout((position == Dock::Top || position == Dock::Bottom) ? QBoxLayout::LeftToRight : QBoxLayout::TopToBottom);
-            centralLayout->setMargin(0);
-            setLayout(centralLayout);
-        }
-
+        // 当模式切换的时候，绘制图表ui
+        centralLayout->setDirection((position == Dock::Top || position == Dock::Bottom) ? QBoxLayout::LeftToRight : QBoxLayout::TopToBottom);
         centralLayout->setSpacing(settings.value("chartSpacingSpinBox").toInt());
         if (settings.value("cpuChartCheckBox").toInt()) {
             if (cpuChart == nullptr) {
-                cpuChart = new StreamChart();
+                cpuChart = new StreamChart(this);
                 centralLayout->addWidget(cpuChart);
             }
             data.x = info.cpu;
@@ -241,7 +197,7 @@ void MainWidget::updateData(const Info &info, Dock::Position position, const Set
         }
         if (settings.value("memChartCheckBox").toInt()) {
             if (memChart == nullptr) {
-                memChart = new StreamChart();
+                memChart = new StreamChart(this);
                 centralLayout->addWidget(memChart);
             }
             data.x = info.mem;
@@ -259,7 +215,7 @@ void MainWidget::updateData(const Info &info, Dock::Position position, const Set
         }
         if (settings.value("netChartCheckBox").toInt()) {
             if (netChart == nullptr) {
-                netChart = new StreamChart();
+                netChart = new StreamChart(this);
                 centralLayout->addWidget(netChart);
             }
             data.x = info.netdown * 100 / 1024 / settings.value("netDownTopSpinBox").toInt();
@@ -276,57 +232,6 @@ void MainWidget::updateData(const Info &info, Dock::Position position, const Set
             netChart->updateChart(data);
         }
     }
-    oldsettings = settings;
-    // qDebug()<<"MainWidget::UpdateData() finished";
-}
 
-QSize MainWidget::sizeHint() const
-{
-    if (centralLayout == nullptr)
-        return QSize(100, 30);
-    int w, h;
-    const Dock::Position position = qApp->property(PROP_POSITION).value<Dock::Position>();
-    if (!oldsettings.value("chartModeCheckBox").toInt()) //文字模式
-    {
-        switch (oldsettings.value("displayContentComboBox").toInt()) {
-        case DisplayContentSetting::CPUMEM:
-            w = QFontMetrics(font).boundingRect(cpuMemLabel->text()).size().width() / 2;
-            h = QFontMetrics(font).boundingRect(cpuMemLabel->text()).size().height() * 2;
-            break;
-        case DisplayContentSetting::NETSPEED:
-            w = QFontMetrics(font).boundingRect(netLabel->text()).size().width() / 2;
-            h = QFontMetrics(font).boundingRect(netLabel->text()).size().height() * 2;
-            break;
-        case DisplayContentSetting::ALL:
-            if (position == Dock::Top || position == Dock::Bottom) {
-                w = QFontMetrics(font).boundingRect(cpuMemLabel->text()).size().width() / 2 + QFontMetrics(font).boundingRect(netLabel->text()).size().width() / 2;
-                h = qMax(QFontMetrics(font).boundingRect(cpuMemLabel->text()).size().height() * 2,
-                         QFontMetrics(font).boundingRect(netLabel->text()).size().height() * 2);
-            } else {
-                w = qMax(QFontMetrics(font).boundingRect(cpuMemLabel->text()).size().width() / 2,
-                         QFontMetrics(font).boundingRect(netLabel->text()).size().width() / 2);
-                h = QFontMetrics(font).boundingRect(cpuMemLabel->text()).size().height() * 2 + QFontMetrics(font).boundingRect(netLabel->text()).size().height() * 2;
-            }
-            break;
-        default:
-            w = QFontMetrics(font).boundingRect(netLabel->text()).size().width() / 2;
-            h = QFontMetrics(font).boundingRect(netLabel->text()).size().height() * 2;
-            break;
-        }
-    } else //图表模式
-    {
-        if (position == Dock::Top || position == Dock::Bottom) {
-            w = (cpuChart == nullptr ? 0 : cpuChart->width) + (memChart == nullptr ? 0 : memChart->width) + (netChart == nullptr ? 0 : netChart->width);
-            h = qMax(cpuChart == nullptr ? 0 : cpuChart->height,
-                     qMax(memChart == nullptr ? 0 : memChart->height, netChart == nullptr ? 0 : netChart->height));
-        } else {
-            w = qMax(cpuChart == nullptr ? 0 : cpuChart->width,
-                     qMax(memChart == nullptr ? 0 : memChart->width, netChart == nullptr ? 0 : netChart->width));
-            h = (cpuChart == nullptr ? 0 : cpuChart->height) + (memChart == nullptr ? 0 : memChart->height) + (netChart == nullptr ? 0 : netChart->height);
-        }
-    }
-    QSize size(w, h);
-    // qDebug()<<size;
-    // qDebug()<<QString("width:%1    height:%2").arg(width()).arg(height());
-    return size;
+    oldsettings = settings;
 }

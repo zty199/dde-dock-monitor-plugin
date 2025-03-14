@@ -1,30 +1,29 @@
 #ifndef SYSMONITORPLUGIN_H
 #define SYSMONITORPLUGIN_H
 
-#include "mainwidget.h"
-#include "pluginsettingdialog.h"
-#include "aboutdialog.h"
 #include "type.h"
 
 #include <pluginsiteminterface.h>
-#include <QGSettings>
 
+#include <QLabel>
 #include <QObject>
 #include <QTimer>
-#include <QLabel>
-
-#include <cstdio>
+#include <QScopedPointer>
 
 namespace Dock {
 class TipsWidget;
 }
 
+class MainWidget;
+class pluginSettingDialog;
+class AboutDialog;
+class WidgetPlugin;
 class SysMonitorPlugin : public QObject
     , PluginsItemInterface
 {
     Q_OBJECT
     Q_INTERFACES(PluginsItemInterface)
-    Q_PLUGIN_METADATA(IID "com.deepin.dock.PluginsItemInterface" FILE "sys-monitor.json")
+    Q_PLUGIN_METADATA(IID ModuleInterface_iid FILE "sys-monitor.json")
 
 public:
     explicit SysMonitorPlugin(QObject *parent = nullptr);
@@ -50,21 +49,20 @@ public:
     PluginSizePolicy pluginSizePolicy() const override;
 
 private:
-    //自定义读写配置函数
+    // 自定义读写配置函数
     void readConfig(Settings *settings);
     void writeConfig(Settings *settings);
 
     const QString toHumanRead(unsigned long l, const char *unit, int digit);
 
 private slots:
-    void onGsettingsChanged(const QString &key);
     // 用于更新数据的槽函数
     void refreshInfo();
-    //更新tipsWidget气泡数据的函数
+    // 更新tipsWidget气泡数据的函数
     void updateWidget(Dock::TipsWidget *widget);
 
 public:
-    static struct SettingItem settingItems[]; //公共的保存默认设置的数组
+    static struct SettingItem settingItems[]; // 公共的保存默认设置的数组
 
 private:
     // CPU工作时间除以总时间,内存百分比,交换区百分比
@@ -72,23 +70,23 @@ private:
     QString strswap;
     // 获取cpu总时间,获取cpu工作时间
     unsigned long long totaltime, worktime;
-    //保存上一次结果
+    // 保存上一次结果
     unsigned long long oldtotaltime, oldworktime;
     // cpu的各种时间变量
     unsigned long long user, nice, system, idle;
     unsigned long long iowait, irq, softirq, steal, guest, guestnice;
-    //字符数组保存文件内容
+    // 字符数组保存文件内容
     char buffer[1024];
-    //文件描述符
+    // 文件描述符
     FILE *fp;
-    //总内存，可用内存
+    // 总内存，可用内存
     unsigned long totalmem, availablemem, tmp, totalswap, freeswap;
-    //接收字节数，发送字节数
+    // 接收字节数，发送字节数
     unsigned long rbytes, sbytes, oldrbytes, oldsbytes, tmpr, tmps;
     char devname[1024];
-    //电池功率瓦特
+    // 电池功率瓦特
     double battery_watts;
-    //电池统计计数，每隔这么多次才读取一次
+    // 电池统计计数，每隔这么多次才读取一次
     int bat_count;
     // 字体
     QFont font;
@@ -96,9 +94,9 @@ private:
     Dock::DisplayMode dismode;
     // dock的位置：上下左右
     Dock::Position pos;
-    //设置结构体
+    // 设置结构体
     Settings settings;
-    //传递给widget的信息结构体
+    // 传递给widget的信息结构体
     Info info;
 
 private:
@@ -107,9 +105,11 @@ private:
 
     MainWidget *m_mainWidget = nullptr;
     Dock::TipsWidget *m_tipsWidget = nullptr;
-    Dock::TipsWidget *m_appletWidget = nullptr;
 
-    QGSettings *m_gsettings = nullptr;
+    QScopedPointer<pluginSettingDialog> m_settingDialog;
+    QScopedPointer<AboutDialog> m_aboutDialog;
+
+    WidgetPlugin *m_proxyInter = nullptr;
 };
 
 #endif // SYSMONITORPLUGIN_H

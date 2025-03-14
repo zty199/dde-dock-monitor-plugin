@@ -1,7 +1,14 @@
+dde-dock-monitor-plugin (2.0.1) stable; urgency=medium
+
+  * Be compatible with Deepin 23
+
+ -- shenmo <jifengshenmo@outlook.com>  Sun, 28 Jul 2024 00:21:25 +0800
+
+
 dde-dock-monitor-plugin (1.8.0spark0) stable; urgency=medium
 
   * Initial Release
   * Fix Bugs in Deepin 20.7
 
- -- shenmo <jifengshenmo@outlook.com>  Sat, 2 Fri 2022 23:00:00 +0800
+ -- shenmo <jifengshenmo@outlook.com>  Sat, 2 May 2022 23:00:00 +0800
 
