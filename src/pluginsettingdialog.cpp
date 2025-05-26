@@ -26,7 +26,8 @@ pluginSettingDialog::pluginSettingDialog(Settings *settings, QWidget *parent)
             qDebug() << "不能找到对象名为：" << i.key();
             continue;
         }
-        if (obj->metaObject()->className() == QStringLiteral("QComboBox")) {
+        if (obj->metaObject()->className() == QStringLiteral("QComboBox")
+            || obj->inherits("QComboBox")) {
             QComboBox *cb = qobject_cast<QComboBox *>(obj);
             cb->setCurrentIndex(i.value().toInt());
         } else if (obj->metaObject()->className() == QStringLiteral("QCheckBox")) {
@@ -67,7 +68,8 @@ void pluginSettingDialog::getDisplayContentSetting(Settings *settings)
             qDebug() << "不能找到对象名为：" << i.key();
             continue;
         }
-        if (obj->metaObject()->className() == QStringLiteral("QComboBox")) {
+        if (obj->metaObject()->className() == QStringLiteral("QComboBox")
+            || obj->inherits("QComboBox")) {
             QComboBox *cb = qobject_cast<QComboBox *>(obj);
             settings->insert(cb->objectName(), cb->currentIndex());
         } else if (obj->metaObject()->className() == QStringLiteral("QCheckBox")) {

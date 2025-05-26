@@ -17,7 +17,7 @@ public:
     explicit pluginSettingDialog(Settings *settings, QWidget *parent = nullptr);
     ~pluginSettingDialog();
 
-    //公有函数获得显示设置
+    // 公有函数获得显示设置
     void getDisplayContentSetting(Settings *settings);
 
 private slots:
@@ -26,7 +26,7 @@ private slots:
 private:
     Ui::pluginSettingDialog *ui;
 
-    //公用的画板
+    // 公用的画板
     QPalette pal;
 };
 
